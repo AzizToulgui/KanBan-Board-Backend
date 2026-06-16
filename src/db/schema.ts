@@ -20,15 +20,21 @@ export const projects = pgTable('projects', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
-  ownerId: integer('owner_id').references(() => users.id),
+  ownerId: integer('owner_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const projectMembers = pgTable(
   'project_members',
   {
-    projectId: integer('project_id').references(() => projects.id),
-    userId: integer('user_id').references(() => users.id),
+    projectId: integer('project_id').references(() => projects.id, {
+      onDelete: 'cascade',
+    }),
+    userId: integer('user_id').references(() => users.id, {
+      onDelete: 'cascade',
+    }),
   },
   (t) => ({
     pk: primaryKey(t.projectId, t.userId),
@@ -37,18 +43,25 @@ export const projectMembers = pgTable(
 
 export const board_columns = pgTable('board_columns', {
   id: serial('id').primaryKey(),
-  projectId: integer('project_id').references(() => projects.id),
+  projectId: integer('project_id')
+    .references(() => projects.id, { onDelete: 'cascade' })
+    .notNull(),
   title: text('title').notNull(),
   position: integer('position').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const tickets = pgTable('tickets', {
   id: serial('id').primaryKey(),
-  columnId: integer('column_id').references(() => board_columns.id),
+  columnId: integer('column_id')
+    .references(() => board_columns.id, { onDelete: 'cascade' })
+    .notNull(),
   title: text('title').notNull(),
   description: text('description'),
-  assigneeId: integer('assignee_id').references(() => users.id),
+  assigneeId: integer('assignee_id').references(() => users.id, {
+    onDelete: 'set null',
+  }),
   position: integer('position').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
