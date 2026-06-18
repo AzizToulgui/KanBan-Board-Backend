@@ -50,6 +50,7 @@ export class TicketsService {
         description: dto.description,
         assigneeId: dto.assigneeId,
         position: dto.position ?? 0,
+        priority: dto.priority ?? 'low',
       })
       .returning();
 

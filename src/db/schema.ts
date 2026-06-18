@@ -5,8 +5,16 @@ import {
   timestamp,
   integer,
   primaryKey,
+  pgEnum,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+
+export const priorityEnum = pgEnum('priority', [
+  'low',
+  'medium',
+  'high',
+  'urgent',
+]);
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -62,6 +70,7 @@ export const tickets = pgTable('tickets', {
   assigneeId: integer('assignee_id').references(() => users.id, {
     onDelete: 'set null',
   }),
+  priority: priorityEnum('priority').notNull().default('low'),
   position: integer('position').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

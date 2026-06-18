@@ -1,4 +1,5 @@
-import { IsString, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import { Priority } from '../types/priority.enums';
 
 export class CreateTicketDto {
   @IsString()
@@ -15,4 +16,8 @@ export class CreateTicketDto {
   @IsNumber()
   @IsOptional()
   position?: number;
+
+  @IsEnum(Priority)
+  @IsOptional()
+  priority?: Priority;
 }
