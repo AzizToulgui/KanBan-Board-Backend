@@ -7,6 +7,7 @@ import {
   Req,
   Patch,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { BoardColumnsService } from './board_columns.service';
 import { CreateBoardColumnsDto } from './dto/create-board-columns.dto';
@@ -40,5 +41,11 @@ export class BoardColumnsController {
     @Req() req: any,
   ) {
     return this.boardColumnsService.update(+id, req.user.userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  delete(@Param('id') id: string, @Req() req: any) {
+    return this.boardColumnsService.delete(+id, req.user.userId);
   }
 }

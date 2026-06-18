@@ -27,6 +27,11 @@ export class ProjectsController {
     return this.projectsService.findAll(req.user.userId);
   }
 
+  @Get(':id/members')
+  ProjectMembers(@Param('id') id: string, @Req() req: any) {
+    return this.projectsService.ProjectMembers(+id, req.user.userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @Req() req: any) {
     return this.projectsService.findOne(+id, req.user.userId);
@@ -34,6 +39,6 @@ export class ProjectsController {
 
   @Post(':id/invite')
   invite(@Param('id') id: string, @Body() dto: InviteDto, @Req() req: any) {
-    return this.projectsService.invite(+id, dto.userId, req.user.userId);
+    return this.projectsService.invite(+id, dto.email, req.user.userId);
   }
 }

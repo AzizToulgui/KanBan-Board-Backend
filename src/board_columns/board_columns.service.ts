@@ -82,4 +82,16 @@ export class BoardColumnsService {
 
     return updated;
   }
+
+  async delete(id: number, userId: number) {
+    const [column] = await db
+      .select()
+      .from(board_columns)
+      .where(eq(board_columns.id, id));
+    if (!column) throw new NotFoundException('Column not found');
+    await this.checkProjectAccess(column.projectId, userId);
+
+    await db.delete(board_columns).where(eq(board_columns.id, id));
+    return { message: 'Column deleted successfully' };
+  }
 }
