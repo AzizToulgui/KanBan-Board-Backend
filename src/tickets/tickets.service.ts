@@ -91,4 +91,17 @@ export class TicketsService {
 
     return updated;
   }
+
+  async delete(id: number, userId: number) {
+    const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id));
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const [column] = await db
+      .select()
+      .from(board_columns)
+      .where(eq(board_columns.id, ticket.columnId));
+    await this.checkProjectAccess(column.projectId, userId);
+
+    await db.delete(tickets).where(eq(tickets.id, id));
+  }
 }

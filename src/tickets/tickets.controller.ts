@@ -7,6 +7,7 @@ import {
   UseGuards,
   Req,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
@@ -39,5 +40,10 @@ export class TicketsController {
     @Req() req: any,
   ) {
     return this.ticketsService.update(+id, req.user.userId, dto);
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string, @Req() req: any) {
+    return this.ticketsService.delete(+id, req.user.userId);
   }
 }
