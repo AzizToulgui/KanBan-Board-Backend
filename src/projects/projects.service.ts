@@ -7,9 +7,12 @@ import { eq, and } from 'drizzle-orm';
 import db from 'src/db';
 import { projects, projectMembers } from 'src/db/schema';
 import { users } from 'src/db/schema';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class ProjectsService {
+  constructor(private mailService: MailService) {}
+
   async create(ownerId: number, dto: { name: string; description?: string }) {
     const [project] = await db
       .insert(projects)
@@ -56,6 +59,15 @@ export class ProjectsService {
   async invite(projectId: number, email: string, requesterId: number) {
     await this.findOne(projectId, requesterId);
 
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, projectId));
+    const [inviter] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, requesterId));
+
     const [user] = await db.select().from(users).where(eq(users.email, email));
     if (!user) {
       throw new NotFoundException('User not found');
@@ -67,6 +79,12 @@ export class ProjectsService {
         userId: user.id,
       })
       .onConflictDoNothing();
+
+    await this.mailService.sendProjectInvite(
+      email,
+      project.name,
+      inviter?.name || inviter?.email || 'A team member',
+    );
 
     return {
       message: 'User invited successfully',

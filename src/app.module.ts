@@ -7,6 +7,7 @@ import { TicketsModule } from './tickets/tickets.module';
 import { BoardColumnsModule } from './board_columns/board_columns.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AppService } from './app.service';
     ProjectsModule,
     TicketsModule,
     BoardColumnsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

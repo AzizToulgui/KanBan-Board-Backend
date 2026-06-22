@@ -5,12 +5,21 @@ import {
 } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import db from '../db';
-import { tickets, board_columns, projects, projectMembers } from '../db/schema';
+import {
+  tickets,
+  board_columns,
+  projects,
+  projectMembers,
+  users,
+} from '../db/schema';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class TicketsService {
+  constructor(private mailService: MailService) {}
+
   private async checkProjectAccess(projectId: number, userId: number) {
     const [project] = await db
       .select()
@@ -89,7 +98,31 @@ export class TicketsService {
       .where(eq(tickets.id, id))
       .returning();
 
-    return updated;
+    if (dto.assigneeId && dto.assigneeId !== ticket.assigneeId) {
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, column.projectId));
+      const [assignee] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, dto.assigneeId));
+      const [assigner] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (assignee?.email) {
+        await this.mailService.sendTicketAssignment(
+          assignee.email,
+          updated.title,
+          project?.name || 'Unknown Project',
+          assigner?.name || assigner?.email || 'Someone',
+        );
+      }
+
+      return updated;
+    }
   }
 
   async delete(id: number, userId: number) {
