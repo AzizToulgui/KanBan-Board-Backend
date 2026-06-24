@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import db from '../db';
 import {
   tickets,
@@ -15,6 +15,8 @@ import {
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { MailService } from 'src/mail/mail.service';
+import { ticketAttachments } from '../db/schema';
+import * as fs from 'fs';
 
 @Injectable()
 export class TicketsService {
@@ -136,5 +138,88 @@ export class TicketsService {
     await this.checkProjectAccess(column.projectId, userId);
 
     await db.delete(tickets).where(eq(tickets.id, id));
+  }
+
+  async uploadAttachment(
+    ticketId: number,
+    file: Express.Multer.File,
+    userId: number,
+  ) {
+    const [ticket] = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const [column] = await db
+      .select()
+      .from(board_columns)
+      .where(eq(board_columns.id, ticket.columnId));
+
+    await this.checkProjectAccess(column.projectId, userId);
+
+    const [attachment] = await db
+      .insert(ticketAttachments)
+      .values({
+        ticketId,
+        fileName: file.originalname,
+        filePath: file.path,
+        mimeType: file.mimetype,
+        size: file.size,
+        uploadedBy: userId,
+      })
+      .returning();
+
+    return attachment;
+  }
+
+  async getAttachments(ticketId: number, userId: number) {
+    const [ticket] = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const [column] = await db
+      .select()
+      .from(board_columns)
+      .where(eq(board_columns.id, ticket.columnId));
+
+    await this.checkProjectAccess(column.projectId, userId);
+
+    return db
+      .select()
+      .from(ticketAttachments)
+      .where(eq(ticketAttachments.ticketId, ticketId))
+      .orderBy(desc(ticketAttachments.createdAt));
+  }
+
+  async getAttachmentForPreview(attachmentId: number, userId: number) {
+    const [attachment] = await db
+      .select()
+      .from(ticketAttachments)
+      .where(eq(ticketAttachments.id, attachmentId));
+
+    if (!attachment) throw new NotFoundException('Attachment not found');
+
+    const [ticket] = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, attachment.ticketId));
+
+    const [column] = await db
+      .select()
+      .from(board_columns)
+      .where(eq(board_columns.id, ticket.columnId));
+
+    await this.checkProjectAccess(column.projectId, userId);
+
+    if (!fs.existsSync(attachment.filePath)) {
+      throw new NotFoundException('File not found on server');
+    }
+
+    return attachment;
   }
 }

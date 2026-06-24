@@ -76,6 +76,21 @@ export const tickets = pgTable('tickets', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+export const ticketAttachments = pgTable('ticket_attachments', {
+  id: serial('id').primaryKey(),
+  ticketId: integer('ticket_id')
+    .references(() => tickets.id, { onDelete: 'cascade' })
+    .notNull(),
+  fileName: text('file_name').notNull(),
+  filePath: text('file_path').notNull(),
+  mimeType: text('mime_type').notNull(),
+  size: integer('size').notNull(),
+  uploadedBy: integer('uploaded_by')
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   ownedProjects: many(projects),
   memberProjects: many(projectMembers),
@@ -120,3 +135,5 @@ export const ticketsRelations = relations(tickets, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export type TicketAttchment = typeof ticketAttachments.$inferSelect;
